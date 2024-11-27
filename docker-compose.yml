@@ -1,0 +1,74 @@
+services:
+  # Laravel API Service
+  api:
+    build:
+      context: ../vltava-api  # Path to Laravel API codebase
+      dockerfile: Dockerfile   # Laravel's Dockerfile
+    volumes:
+      - ../vltava-api/app:/var/www/app
+      - ../vltava-api/public:/var/www/public
+      - ../vltava-api/routes:/var/www/routes
+      - ../vltava-api/resources:/var/www/resources
+    environment:
+      - APP_ENV=local
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=mydatabase
+      - DB_USERNAME=myuser
+      - DB_PASSWORD=mypassword
+    networks:
+      - app-network
+    depends_on:
+      - db
+    expose:
+      - "9000"
+    container_name: "api"
+
+  # Next.js Frontend Service
+  frontend:
+    build:
+      context: ../vltava-frontend  # Path to Next.js codebase
+      dockerfile: Dockerfile      # Next.js Dockerfile
+    volumes:
+      - ../vltava-frontend:/app
+    networks:
+      - app-network
+    container_name: "frontend"
+
+  # PostgreSQL Database Service
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    ports:
+      - "5432:5432"
+    container_name: "db"
+
+  # NGINX Reverse Proxy
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"                     # Expose NGINX on port 80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Custom NGINX configuration
+    networks:
+      - app-network
+    depends_on:
+      - api
+      - frontend
+    container_name: "nginx"
+
+# Define shared network for all services
+networks:
+  app-network:
+    driver: bridge
+
+# Define named volume for PostgreSQL data persistence
+volumes:
+  db_data:
