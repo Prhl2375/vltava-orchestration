@@ -9,6 +9,7 @@ services:
       - ../vltava-api/public:/var/www/public
       - ../vltava-api/routes:/var/www/routes
       - ../vltava-api/resources:/var/www/resources
+      - ../vltava-api/database:/var/www/database
     environment:
       - APP_ENV=local
       - DB_HOST=db
